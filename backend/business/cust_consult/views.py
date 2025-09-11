@@ -5,12 +5,10 @@ from django.db import connection
 @api_view(['POST'])
 def save_consult(request):
     try:
-        # Request Body에서 데이터 추출
         customer_id = request.data.get('customer_id')
         consult_text = request.data.get('consult_text')
         stages = request.data.get('stages', [])
         
-        # 필수 필드 검증
         if not customer_id:
             return Response({
                 'status': 400,
@@ -25,26 +23,55 @@ def save_consult(request):
                 'data': {}
             })
         
-        with connection.cursor() as cursor:
-            # 1. consult 테이블에 데이터 저장
-            cursor.execute("""
-                INSERT INTO consult (customer_id, consult_text, consult_date)
-                VALUES (%s, %s, NOW())
-            """, [customer_id, consult_text])
-            
-            # 생성된 consult_id 가져오기
-            consult_id = cursor.lastrowid
-            
-            # 2. stages 배열 처리 - 여러 개 저장
-            for stage in stages:
-                stage_meta_id = stage.get('stage_meta_id')
-                stage_name = stage.get('stage_name')
+        if not stages:
+            return Response({
+                'status': 400,
+                'message': 'stages는 최소 1개 이상이어야 합니다.',
+                'data': {}
+            })
+        
+        cursor = connection.cursor()
+        
+
+        # stage 검증
+        for stage in stages:
+            stage_meta_id= stage.get('stage_meta_id')
+            stage_name= stage.get('stage_name')
                 
-                if stage_meta_id and stage_name:
-                    cursor.execute("""
-                        INSERT INTO consult_stage (consult_id, stage_meta_id, stage_name, created_at)
-                        VALUES (%s, %s, %s, NOW())
-                    """, [consult_id, stage_meta_id, stage_name])
+            if not stage_meta_id:
+                return Response({
+                    'status': 400,
+                    'message': f'stage_meta_id는 필수입니다.',
+                    'data': {}
+                })
+        
+            if not stage_name:
+                return Response({
+                    'status': 400,
+                    'message': f'stage_name은 필수입니다.',
+                    'data': {}
+                })
+                
+            if not isinstance(stage_meta_id, int) or stage_meta_id <= 0:
+                return Response({
+                    'status': 400,
+                    'message': f'stage_meta_id는 양수여야 합니다.',
+                    'data': {}
+                })
+
+        cursor.execute(
+            """INSERT INTO consult (customer_id, consult_text, consult_date)
+            VALUES (%s, %s, NOW())""", [customer_id, consult_text])
+        
+        consult_id = cursor.lastrowid
+
+        for stage in stages:
+            stage_meta_id= stage.get('stage_meta_id')
+            stage_name= stage.get('stage_name')
+            if stage_meta_id and stage_name :
+                cursor.execute("""INSERT INTO consult_stage (consult_id, stage_meta_id, stage_name, created_at)
+                               VALUES (%s, %s, %s, NOW())""", [consult_id,stage_meta_id,stage_name])
+        cursor.close()
         
         return Response({
             'status': 200,
