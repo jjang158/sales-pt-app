@@ -61,9 +61,9 @@ def save_consult(request):
 
         cursor.execute(
             """INSERT INTO consult (customer_id, consult_text, consult_date)
-            VALUES (%s, %s, NOW())""", [customer_id, consult_text])
+            VALUES (%s, %s, NOW()) RETURNING id""", [customer_id, consult_text])
         
-        consult_id = cursor.lastrowid
+        consult_id = cursor.fetchone()[0] # PostgreSQL 은 RETURNING id와 이 한줄이 필요하다고 하는데 이해가 잘 되지않음 나중에 재학습필요
 
         for stage in stages:
             stage_meta_id= stage.get('stage_meta_id')
