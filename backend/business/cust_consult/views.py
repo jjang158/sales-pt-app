@@ -1,6 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.db import connection
+from common.response_format import response_suc, response_err
 
 @api_view(['POST'])
 def save_consult(request):
@@ -10,11 +11,7 @@ def save_consult(request):
         stages = request.data.get('stages', [])
         
         if not customer_id:
-            return Response({
-                'status': 400,
-                'message': 'customer_id는 필수입니다.',
-                'data': {}
-            })
+            return response_err(400, 'customer_id는 필수입니다.')
             
         if not consult_text:
             return Response({
@@ -73,11 +70,7 @@ def save_consult(request):
                                VALUES (%s, %s, %s, NOW())""", [consult_id,stage_meta_id,stage_name])
         cursor.close()
         
-        return Response({
-            'status': 200,
-            'message': 'Success',
-            'data': {}
-        })
+        return response_suc()
         
     except Exception as e:
         return Response({
