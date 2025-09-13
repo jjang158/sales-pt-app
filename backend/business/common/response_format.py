@@ -7,8 +7,8 @@ def response_suc(data={}):
                     "data": data}
     return Response(response_data, status=status.HTTP_200_OK)
     
-def response_err(status, message, data={}):
-    response_data = {"status": status,
+def response_err(status_code, message, data={}):
+    response_data = {"status": status_code,
                     "message": message,
                     "data": data}
     return Response(response_data, status=status.HTTP_200_OK)

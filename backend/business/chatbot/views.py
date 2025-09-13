@@ -1,17 +1,19 @@
 from rest_framework.views import APIView
-from common.doc_to_vector import process_pdfs
-from common.response_format import response_suc, response_err
+from ..common.doc_to_vector import process_pdfs
+from ..common.response_format import response_suc, response_err
 
 from .serializers import ChatbotRequestSerializer
 
 class DocumentVectorizing(APIView):
     def post(self, request):
         try:
-            process_pdfs()
-            return response_suc()
+            total_count, suc_count = process_pdfs()
+            print(f"total_count : {total_count}")
+            print(f"suc_count : {suc_count}")
         except Exception as e:
             return response_err(500, str(e))
-
+        
+        return response_suc()
 
 class ChatbotQueryView(APIView):
     def post(self, request):

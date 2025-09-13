@@ -1,7 +1,7 @@
 import os, pdfplumber
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.embeddings.openai import OpenAIEmbeddings
-from .models import VectorFileInfo, VectorFileDetail
+from langchain_openai import OpenAIEmbeddings
+from ..chatbot.models import VectorFileInfo, VectorFileDetail
 from django.db import transaction
 
 PDF_DIR = "/home/ubuntu/sales-guide"
@@ -24,12 +24,13 @@ def chunk_text(text, chunk_size=1000, overlap=200):
 
 def process_pdfs():
     files = [f for f in os.listdir(PDF_DIR) if f.endswith(".pdf")]
+    suc_count = 0
 
     for file_name in files:
         pdf_path = os.path.join(PDF_DIR, file_name)
 
         # 이미 처리된 파일은 skip
-        if VectorFileInfo.objects.filter(file_name=file_name).exists():
+        if VectorFileInfo.objects.filter(file_name=file_name).filter(status='S').exists():
             continue
 
         # vector_file_info에 상태 'P'로 저장
@@ -54,6 +55,7 @@ def process_pdfs():
                     )
 
             # 성공 처리
+            suc_count = suc_count+1
             file_info.status = 'S'
             file_info.save()
 
@@ -62,3 +64,4 @@ def process_pdfs():
             file_info.status = 'F'
             file_info.save()
             print(f"{file_name} 처리 실패: {str(e)}")
+    return len(files), suc_count
