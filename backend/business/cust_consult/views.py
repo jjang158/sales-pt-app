@@ -148,3 +148,57 @@ def consult_list(request):
         return response_err(500, f'조회 중 오류가 발생했습니다: {str(e)}')
     finally:
         cursor.close()
+
+# 상담내역 상세조회1 - 고객정보
+@api_view(['GET'])
+def consult_cust(request):
+    cursor = connection.cursor()
+    try:
+        customer_id = request.GET.get('customer_id')
+        
+        if not customer_id:
+            return response_err(400, 'customer_id는 필수입니다.')
+        
+        try:
+            customer_id = int(customer_id)
+        except ValueError:
+            return response_err(400, 'customer_id는 정수여야 합니다.')
+        
+        sql = """
+        SELECT 
+            c.name,
+            c.email,
+            c.phone_number,
+            (SELECT COUNT(*) FROM consult con 
+             WHERE con.customer_id = c.id AND con.content_type = 'voice') as consult_count,
+            (SELECT COUNT(*) FROM consult con 
+             WHERE con.customer_id = c.id) as action_count,
+            (SELECT COUNT(*) FROM todo_list t 
+             WHERE t.customer_id = c.id AND t.is_completed = false) as pending_count
+        FROM customer c
+        WHERE c.id = %s
+        """
+        
+        cursor.execute(sql, [customer_id])
+        result = cursor.fetchone()
+        
+        if not result:
+            return response_err(400, '해당 고객을 찾을 수 없습니다.')
+        
+        customer_info = {
+            'cust_name': result[0],
+            'email': result[1],
+            'phone_number': result[2],
+            'consult_count': result[3] or 0,
+            'action_count': result[4] or 0,
+            'pending_count': result[5] or 0
+        }
+        
+        return response_suc({
+            'cust_info': customer_info
+        })
+        
+    except Exception as e:
+        return response_err(500, f'조회 중 오류가 발생했습니다: {str(e)}')
+    finally:
+        cursor.close()
