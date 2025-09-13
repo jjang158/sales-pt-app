@@ -2,6 +2,12 @@ Django
 psycopg2-binary
 python-decouple
 pgvector
-langchain
 pdfplumber
 openai
+python-dotenv
+djangorestframework
+langchain
+langchain-core
+langchain-community
+tiktoken
+langchain-openai

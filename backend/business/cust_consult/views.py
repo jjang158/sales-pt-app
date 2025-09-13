@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.db import connection
-from common.response_format import response_suc, response_err
+from ..common.response_format import response_suc, response_err
 from .openaiservice import analyze_consult_text 
 import json
 from django.http import JsonResponse
