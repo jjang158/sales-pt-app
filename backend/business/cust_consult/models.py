@@ -1,9 +1,23 @@
 from django.db import models
 
+class Customer(models.Model):
+    id = models.AutoField(primary_key=True)  # INT / PK, AUTO_INCREMENT / 고객 ID
+    name = models.CharField(max_length=100)  # VARCHAR(100) / NOT NULL / 고객 이름
+    phone_number = models.CharField(max_length=20, unique=True, null=True, blank=True)  # VARCHAR(20) / UNIQUE / 연락처
+    email = models.CharField(max_length=100, null=True)  # VARCHAR(100) / NULL / 이메일
+    address = models.CharField(max_length=200, null=True)  # VARCHAR(200) / NULL / 주소
+    remark = models.TextField(null=True, blank=True)  # TEXT / NULL / 비고
+    created_at = models.DateTimeField()  # TIMESTAMP / DEFAULT now() / 등록일
+    updated_at = models.DateTimeField()  # TIMESTAMP / DEFAULT now() / 수정일
+
+    class Meta:
+        db_table = 'customer'
+        managed = False
+
 class Todo_list(models.Model):
     id= models.AutoField(primary_key=True) # INT / PK,AUTO_INCREMENT / 고유 ID
     customer_id=models.IntegerField(null=True) # INT / NULL,FK > customir.id / 상담고객
-    due_date= models.DateTimeField(blank=True, null=True) # Timestamp / NULL / 마감일
+    due_date= models.DateTimeField(null=True) # Timestamp / NULL / 마감일
     title= models.CharField(max_length=200) # VARCHAR(200) / Not null / 할일 제목
     description= models.TextField(null=True) # Text / Null / 상세 설명
     is_completed= models.BooleanField(default=False) # BOOLEAN / DEFAULT FALSE / 완료 여부

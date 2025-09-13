@@ -87,47 +87,64 @@ def analyze_consult(request):
     except Exception as e:
         return response_err(500,f'분석 중 오류가 발생했습니다: {str(e)}')
 
-# Todo List 조회 API
+# 상담내역 리스트 조회
 @api_view(['GET'])
-def todo(request):
+def consult_list(request):
     cursor = connection.cursor()
     try:
-        sql = "SELECT id, customer_id, due_date, title, description, is_completed, created_at FROM todo_list WHERE 1=1"
+        customer_name = request.GET.get('customer_name')
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
         
-        # customer_id 필터
-        customer_id = request.GET.get('customer_id')
-        if customer_id:
-            try:
-                customer_id = int(customer_id)
-                sql += f" AND customer_id = {customer_id}"
-            except ValueError:
-                return response_err(400,'customer_id는 정수여야 합니다.')
+        sql = """
+        SELECT 
+            c.name,
+            (SELECT COUNT(*) FROM consult con 
+             WHERE con.customer_id = c.id AND con.content_type = 'voice') as consult_count,
+            (SELECT COUNT(*) FROM consult con 
+             WHERE con.customer_id = c.id) as action_count,
+            (SELECT COUNT(*) FROM todo_list t 
+             WHERE t.customer_id = c.id AND t.is_completed = false) as pending_count,
+            (SELECT con.consult_text FROM consult con 
+             WHERE con.customer_id = c.id AND con.content_type = 'voice'
+             ORDER BY con.consult_date DESC LIMIT 1) as latest_voice
+        FROM customer c
+        WHERE 1=1
+        """
         
-        # 완료 여부 필터
-        is_completed = request.GET.get('is_completed')
-        if is_completed == 'true':
-            sql += " AND is_completed = true"
-        elif is_completed == 'false':
-            sql += " AND is_completed = false"
+        if customer_name:
+            sql += f" AND c.name LIKE '%{customer_name}%'"
+        
+        # 날짜 필터
+        if start_date or end_date:
+            sql += " AND EXISTS (SELECT 1 FROM consult con WHERE con.customer_id = c.id"
             
+            if start_date:
+                sql += f" AND con.consult_date >= '{start_date}'"
+                
+            if end_date:
+                sql += f" AND con.consult_date <= '{end_date}'"
+            
+            sql += ")"
+        
+        sql += " ORDER BY c.name"
+        
         cursor.execute(sql)
         results = cursor.fetchall()
         
-        todos = []
+        customers = []
         for row in results:
-            todos.append({
-                'id': row[0],
-                'customer_id': row[1], 
-                'due_date': row[2].isoformat() if row[2] else None,
-                'title': row[3],
-                'description': row[4],
-                'is_completed': row[5],
-                'created_at': row[6].isoformat() if row[6] else None
+            customers.append({
+                'customer_name': row[0],
+                'consult_count': row[1] or 0,
+                'action_count': row[2] or 0,
+                'pending_count': row[3] or 0,
+                'latest_voice': row[4]
             })
-            
-        return response_suc(todos)
+        
+        return response_suc({'list': customers})
         
     except Exception as e:
-        return response_err(500,f'오류: {str(e)}')
+        return response_err(500, f'조회 중 오류가 발생했습니다: {str(e)}')
     finally:
         cursor.close()
