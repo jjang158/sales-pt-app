@@ -9,9 +9,13 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-
+import os
+from dotenv import load_dotenv
 from pathlib import Path
 from decouple import config
+
+# api key를 읽기 위한 .env파일로드
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -38,14 +42,11 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-<<<<<<< Updated upstream
-=======
-    
+
     "business.chatbot",
     "business.common",
     'business.cust_consult',
     'business.view_todo',
->>>>>>> Stashed changes
 ]
 
 MIDDLEWARE = [
