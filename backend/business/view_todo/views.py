@@ -4,6 +4,7 @@ from django.db import connection
 import json
 from django.http import JsonResponse
 from .models import Todo_list
+from ..common.response_format import response_suc, response_err
 
 # Todo List 조회 API
 @api_view(['GET'])
@@ -22,12 +23,7 @@ def todo(request, id=None):
                 customer_id = int(customer_id)
                 sql += f" AND customer_id = {customer_id}"
             except ValueError:
-                return JsonResponse({
-                    'success': False,
-                    'status': 400,
-                    'message': 'customer_id는 정수여야 합니다.',
-                    'data': []
-                })
+                return response_err(400,'customer_id는 정수여야 합니다.')
         
         # is_completed 필터
         is_completed = request.GET.get('is_completed')
@@ -51,19 +47,9 @@ def todo(request, id=None):
                 'created_at': row[6].isoformat() if row[6] else None
             })
             
-        return JsonResponse({
-            'success': True,
-            'status': 200,
-            'message': 'Todo List 조회 성공',
-            'data': todos
-        })
+        return response_suc(todos)
         
     except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'status': 500,
-            'message': f'오류: {str(e)}',
-            'data': []
-        })
+        return response_err(500,f'오류: {str(e)}')
     finally:
         cursor.close()
