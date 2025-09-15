@@ -20,3 +20,13 @@ class VectorFileDetail(models.Model):
     
     class Meta:
         db_table = "vector_file_detail" 
+
+
+class VectorConsultData(models.Model):
+    consult_id = models.IntegerField()
+    content = models.TextField()
+    embedding = VectorField(dimensions=1536, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+        
+    class Meta:
+        db_table = "vector_consult_data" 
