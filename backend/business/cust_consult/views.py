@@ -2,9 +2,10 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.db import connection
 from .openaiservice import analyze_consult_text 
+from .models import Consult, TodoList
+from .serializers import ConsultSerializer, TodoSerializer
 import json
 from django.http import JsonResponse
-from .models import Todo_list
 from ..common.response_format import response_suc, response_err
 
 #상담 정보 등록 API
@@ -202,3 +203,43 @@ def consult_cust(request):
         return response_err(500, f'조회 중 오류가 발생했습니다: {str(e)}')
     finally:
         cursor.close()
+
+#상담내역 상세조회 API
+@api_view(['GET'])
+def consult_detail(request):
+    customer_id = request.query_params.get("customer_id")
+    tab_type = request.query_params.get("tab_type")
+
+    if not customer_id or not tab_type:
+        return response_err(400, "customer_id와 tab_type은 필수값입니다.")
+
+    try:
+        queryset_map = {
+            "voice": Consult.objects.filter(
+                customer_id=customer_id, content_type="voice"
+            ).order_by("-consult_date"),
+
+            "active": Consult.objects.filter(
+                customer_id=customer_id
+            ).order_by("-consult_date"),
+            
+            "todo": TodoList.objects.filter(
+                customer_id=customer_id
+            ).order_by("-due_date"),
+        }
+
+        serializer_map = {
+            "voice": ConsultSerializer,
+            "active": ConsultSerializer,
+            "todo": TodoSerializer,
+        }
+
+        queryset = queryset_map.get(tab_type)
+        serializer_class = serializer_map.get(tab_type)
+
+        serializer = serializer_class(queryset, many=True)
+
+        return response_suc({"list": serializer.data})
+
+    except Exception as e:
+        return response_err(500, str(e))
