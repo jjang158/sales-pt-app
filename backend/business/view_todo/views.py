@@ -11,7 +11,20 @@ from ..common.response_format import response_suc, response_err
 def todo(request, id=None):
     cursor = connection.cursor()
     try:
-        sql = "SELECT id, customer_id, due_date, title, description, is_completed, created_at FROM todo_list WHERE 1=1"
+        sql = """
+        SELECT 
+            t.id, 
+            t.customer_id, 
+            c.name as customer_name,
+            t.due_date, 
+            t.title, 
+            t.description, 
+            t.is_completed, 
+            t.created_at 
+        FROM todo_list t
+        LEFT JOIN customer c ON t.customer_id = c.id
+        WHERE 1=1
+        """
         
         if id:
             sql += f" AND id = {id}"
@@ -40,11 +53,12 @@ def todo(request, id=None):
             todos.append({
                 'id': row[0],
                 'customer_id': row[1], 
-                'due_date': row[2].isoformat() if row[2] else None,
-                'title': row[3],
-                'description': row[4],
-                'is_completed': row[5],
-                'created_at': row[6].isoformat() if row[6] else None
+                'customer_name':row[2],
+                'due_date': row[3].isoformat() if row[3] else None,
+                'title': row[4],
+                'description': row[5],
+                'is_completed': row[6],
+                'created_at': row[7].isoformat() if row[7] else None
             })
             
         return response_suc(todos)
