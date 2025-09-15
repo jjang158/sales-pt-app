@@ -19,6 +19,7 @@ class Consult(models.Model):
     consult_date= models.DateTimeField() # Timestamp / Default now() / 상담 일시
     customer_id= models.IntegerField() # INT / Not Null, FK > customer.id / 상담 고객
     consult_text= models.TextField() # Text / Not null / 상담 내용
+    content_type= models.CharField(max_length=10) # content_type / VARCHAR(10) / Not null / 구분(voice:음성, text:텍스트)
 
     class Meta:
         db_table = 'consult'
