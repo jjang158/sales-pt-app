@@ -1,16 +1,10 @@
 from rest_framework import serializers
 
-class ChatbotRequestSerializer(serializers.Serializer):
-    # 필수 질문
-    question = serializers.CharField(
-        required=True,
-        help_text="사용자 질문"
-    )
+class ChatHistorySerializer(serializers.Serializer):
+    role = serializers.ChoiceField(choices=["user", "assistant"])
+    content = serializers.CharField(help_text="이전 대화 기록")
 
-    # 대화 히스토리
-    q_history = serializers.ListField(
-        child=serializers.CharField(),
-        required=False,
-        default=list,
-        help_text="이전 대화 기록"
-    )
+
+class ChatbotRequestSerializer(serializers.Serializer):
+    question = serializers.CharField(required=True, help_text="사용자 질문")
+    q_history = ChatHistorySerializer(many=True, required=False)
