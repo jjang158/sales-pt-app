@@ -18,7 +18,7 @@ def get_sales_stages():
     
     return "\n".join(stage_list)
 
-def analyze_consult_text(text_to_summarize):
+def analyze_consult_text(consult_text):
     # DB에서 영업단계 정보 조회
     sales_stages = get_sales_stages()
     
@@ -40,7 +40,6 @@ def analyze_consult_text(text_to_summarize):
 - 핵심 내용만 간결하게
 - 불필요한 수사나 연결어 제거
 
-**중요:** name은 위에서 제공된 정확한 단계명을 사용하세요.
 
 반드시 아래 JSON 구조로만 응답하세요:
 
@@ -72,7 +71,7 @@ def analyze_consult_text(text_to_summarize):
                     'role': 'user',
                     'content': f"""다음 상담 내용을 분석하여 해당하는 모든 영업 단계를 찾아 분류해주세요:
 
-                    {text_to_summarize}
+                    {consult_text}
 
                     상담 과정에서 일어난 모든 영업 활동을 고려하여 응답해주세요."""
                 }
