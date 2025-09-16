@@ -1,9 +1,6 @@
 from rest_framework.decorators import api_view
-from rest_framework.response import Response
 from django.db import connection
 import json
-from django.http import JsonResponse
-from .models import Todo_list
 from ..common.response_format import response_suc, response_err
 
 # Todo List 조회 API
