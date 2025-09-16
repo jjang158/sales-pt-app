@@ -23,4 +23,5 @@ urlpatterns = [
     path("api/consult/", include("business.cust_consult.urls")),
     path("api/chatbot/", include("business.chatbot.urls")),
     path("api/todos/", include("business.view_todo.urls")),
+    path("api/salesmeta/", include("business.sales_stage_meta.urls")),
 ]

@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "business.common",
     'business.cust_consult',
     'business.view_todo',
+    'business.sales_stage_meta',
 ]
 
 MIDDLEWARE = [
