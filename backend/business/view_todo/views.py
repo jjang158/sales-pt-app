@@ -67,3 +67,29 @@ def todo(request, id=None):
         return response_err(500,f'오류: {str(e)}')
     finally:
         cursor.close()
+
+# Todo 완료 처리 API
+@api_view(['PUT'])
+def todo_complete(request):
+    try:
+        cursor = connection.cursor()
+        id= request.data.get('id')
+        completed= request.data.get('completed')
+
+        if not id:
+            return response_err(400,'id가 입력되야합니다.')
+        
+        if completed is None:
+            return response_err(400, 'completed가 입력되야합니다.')
+
+        sql= "UPDATE todo_list SET is_completed= %s WHERE id= %s"
+        cursor.execute(sql,[completed, id])
+
+        if cursor.rowcount == 0:
+            return response_err(400, '해당 ID의 Todo를 찾을 수 없습니다.')
+        
+        return response_suc()
+    except Exception as e:
+        return response_err(500, f'오류: {str(e)}')
+    finally:
+        cursor.close
