@@ -171,3 +171,6 @@ CORS_ALLOW_HEADERS = [
     "x-csrftoken",
     "x-requested-with",
 ]
+
+#url / 허용
+APPEND_SLASH=True
