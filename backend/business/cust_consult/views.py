@@ -72,13 +72,13 @@ def save_consult(request):
 @api_view(['POST'])
 def analyze_consult(request):
     try:
-        text_to_summarize = request.data.get('text_to_summarize')
+        consult_text = request.data.get('consult_text')
         
-        if not text_to_summarize:
-            return response_err(400,'text_to_summarize는 필수입니다')
+        if not consult_text:
+            return response_err(400,'consult_text는 필수입니다')
         
         # OpenAI 분석 호출
-        result = analyze_consult_text(text_to_summarize)
+        result = analyze_consult_text(consult_text)
         
         return response_suc(result)
         
