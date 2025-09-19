@@ -2,25 +2,40 @@ from rest_framework.views import APIView
 from openai import OpenAI
 import os
 
+from .models import VectorFileInfo, VectorFileDetail
 from .serializers import ChatbotRequestSerializer
-from ..common.doc_to_vector import process_pdfs
+from ..common.doc_to_vector import guide_pdf_vectorizing, process_pdfs
 from ..common.response_format import response_suc, response_err
 from .vec_search_service import consult_search, document_search
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+# 영업 가이드 백터화
 class DocumentVectorizing(APIView):
     def post(self, request):
         try:
-            total_count, suc_count = process_pdfs()
+            pdf_dir = "/home/ubuntu/sales-guide"
+            total_count, suc_count = guide_pdf_vectorizing(pdf_dir, VectorFileInfo, VectorFileDetail)
             print(f"total_count : {total_count}")
             print(f"suc_count : {suc_count}")
         except Exception as e:
             return response_err(500, str(e))
         
         return response_suc()
+    
+# TODO - 보험 상품 설명 업로드 및 백터 DB 저장
+class InsuranceTermsVectorizer(APIView):
+    def post(self, request):
+        # 1. 파일 업로드 처리
+        pdf_dir = "/home/ubuntu/sales-insurance/{userid}"
+        
+        
+        # 2. pdf 파일 백터화
+        # process_pdfs(pdf_dir, file_name, vector_info, vector_detail)
+        
+        return response_suc()
 
-
+# 챗봇 서비스
 class ChatbotQueryView(APIView):
     def post(self, request):
         print('챗봇 시작')

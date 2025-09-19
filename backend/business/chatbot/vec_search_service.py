@@ -1,26 +1,35 @@
 from django.db import connection
 from ..common.vector_pool import get_conn, put_conn
 
+# 고객상담 백터 정보 조회
 def consult_search(query_embedding):
     conn = get_conn()
     try:
         with conn.cursor() as cur:
             # consult 검색
-            cur.execute("""
-                SELECT concat(to_char(c.consult_date, 'YYYY.MM.DD HH24:MI'), ' ', (select name from customer c2 where c.customer_id = c2.id)) as file_info, 
-                       d.content, 'consult' AS type,
-                       1 - (d.embedding <=> %s::vector) AS similarity
-                 FROM vector_consult_data d
-                    , consult c 
-                WHERE d.consult_id = c.id
-                ORDER BY d.embedding <=> %s::vector
-                LIMIT 3
-            """, (query_embedding, query_embedding))
+            query = """
+            SELECT 
+                concat(to_char(c.consult_date, 'YYYY.MM.DD HH24:MI'), ' ', 
+                    (select name from customer c2 where c.customer_id = c2.id)) as file_info, 
+                d.content, 
+                'consult' AS type,
+                (
+                    (1 - (d.embedding <=> %s::vector)) * 0.7
+                    +
+                    (1 / (1 + EXTRACT(EPOCH FROM (now() - c.consult_date)) / 86400)) * 0.3
+                ) AS score
+            FROM vector_consult_data d
+            JOIN consult c ON d.consult_id = c.id
+            ORDER BY score DESC
+            LIMIT 3;
+            """
+            cur.execute(query, (query_embedding, query_embedding))
             consult_results = cur.fetchall()
         return consult_results
     finally:
         put_conn(conn) 
 
+# 영업 가이드 정보 조회
 def document_search(query_embedding):
     conn = get_conn()
     try:
