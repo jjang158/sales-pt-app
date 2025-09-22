@@ -45,7 +45,12 @@ class InsuranceTermsVectorizer(APIView):
                 destination.write(chunk)
         
         # 2. pdf 파일 백터화
-        # process_pdfs(pdf_dir, file_name, vector_info, vector_detail)
+        process_pdfs(
+            pdf_path=file_path,
+            file_name=upload_file.name,
+            vector_info=VectorFileInfo,
+            vector_detail=VectorFileDetail
+        )
         
         return response_suc()
 
