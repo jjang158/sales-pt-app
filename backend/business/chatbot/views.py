@@ -26,9 +26,23 @@ class DocumentVectorizing(APIView):
 # TODO - 보험 상품 설명 업로드 및 백터 DB 저장
 class InsuranceTermsVectorizer(APIView):
     def post(self, request):
-        # 1. 파일 업로드 처리
-        pdf_dir = "/home/ubuntu/sales-insurance/{userid}"
+        upload_file= request.FILES.get('pdf_file')
+        userid= request.data.get('user_id')
+
+        if not upload_file:
+            return response_err(400,'PDF파일이 없습니다.')
         
+        if not upload_file.name.endswith('.pdf'):
+            return response_err(400,'PDF 파일만 업로드 가능합니다.')
+        
+        # 1. 파일 업로드 처리
+        pdf_dir =f"/home/ubuntu/sales-insurance/{userid}"
+        os.makedirs(pdf_dir, exist_ok=True)
+
+        file_path = os.path.join(pdf_dir, upload_file.name)
+        with open(file_path, 'wb+') as destination:
+            for chunk in upload_file.chunks():
+                destination.write(chunk)
         
         # 2. pdf 파일 백터화
         # process_pdfs(pdf_dir, file_name, vector_info, vector_detail)
