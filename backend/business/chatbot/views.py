@@ -35,6 +35,9 @@ class InsuranceTermsVectorizer(APIView):
         if not upload_file.name.endswith('.pdf'):
             return response_err(400,'PDF 파일만 업로드 가능합니다.')
         
+        if not userid:
+            return response_err(400,'사용자 ID가 필요합니다.')
+        
         # 1. 파일 업로드 처리
         pdf_dir =f"/home/ubuntu/sales-insurance/{userid}"
         os.makedirs(pdf_dir, exist_ok=True)
