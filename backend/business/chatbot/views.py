@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from openai import OpenAI
 import os
 
-from .models import VectorFileInfo, VectorFileDetail
+from .models import VectorFileInfo, VectorFileDetail, InsuranceTermsFile, InsuranceTermsFileDetail
 from .serializers import ChatbotRequestSerializer
 from ..common.doc_to_vector import guide_pdf_vectorizing, process_pdfs
 from ..common.response_format import response_suc, response_err
@@ -51,8 +51,9 @@ class InsuranceTermsVectorizer(APIView):
         process_pdfs(
             pdf_path=file_path,
             file_name=upload_file.name,
-            vector_info=VectorFileInfo,
-            vector_detail=VectorFileDetail
+            vector_info=InsuranceTermsFile,
+            vector_detail=InsuranceTermsFileDetail,
+            user_id=userid
         )
         
         return response_suc()
