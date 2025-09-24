@@ -23,7 +23,7 @@ def consult_search(query_embedding):
             ORDER BY score DESC
             LIMIT 3;
             """
-            cur.execute(query, (query_embedding,))
+            cur.execute(query, (query_embedding, query_embedding))
             consult_results = cur.fetchall()
         return consult_results
     finally:
