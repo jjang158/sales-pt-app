@@ -66,9 +66,10 @@ def guide_pdf_vectorizing(pdf_dir, vector_info, vector_detail):
 #     7. 실패 시 마스터 상태를 'F'(실패)로 업데이트
 # Returns:
 #     int: 성공적으로 처리된 파일 개수 (성공 시 1, 실패 시 0)
-def process_pdfs(pdf_path, file_name, vector_info, vector_detail):
+def process_pdfs(pdf_path, file_name, vector_info, vector_detail, user_id):
+    suc_count=0 # 변수초기화
     # vector_file_info에 상태 'P'로 저장
-    file_info = vector_info.objects.create(file_name=file_name, status='P')
+    file_info = vector_info.objects.create(file_name=file_name, status='P', user_id=user_id ) #user_id 추가
 
     try:
         # 1. PDF 텍스트 추출
