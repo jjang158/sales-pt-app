@@ -48,3 +48,25 @@ def document_search(query_embedding):
         return doc_results
     finally:
         put_conn(conn) 
+        
+
+# 상품설명 정보 조회
+def insurance_search(query_embedding, user_id):
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            # document 검색
+            cur.execute("""
+                SELECT vfi.file_name as file_info, vfd.content, 'document' AS type,
+                       1 - (vfd.embedding <=> %s::vector) AS similarity
+                FROM insurance_terms_file vfi 
+                   , insurance_terms_file_detail vfd 
+                WHERE vfi.id = vfd.vec_info_id
+                  AND vfi.user_id = %s
+                ORDER BY vfd.embedding <=> %s::vector
+                LIMIT 3
+            """, (query_embedding, user_id, query_embedding))
+            doc_results = cur.fetchall()
+        return doc_results
+    finally:
+        put_conn(conn) 

@@ -7,7 +7,7 @@ from .models import VectorFileInfo, VectorFileDetail, InsuranceTermsFile, Insura
 from .serializers import ChatbotRequestSerializer
 from ..common.doc_to_vector import guide_pdf_vectorizing, process_pdfs
 from ..common.response_format import response_suc, response_err
-from .vec_search_service import consult_search, document_search
+from .vec_search_service import consult_search, document_search, insurance_search
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 llm_server_root = os.environ.get('LLM_SERVER_ROOT')
@@ -60,6 +60,52 @@ class InsuranceTermsVectorizer(APIView):
         )
         
         return response_suc()
+    
+    
+def embedding_search(question):
+    # 1. 질문 임베딩
+    emb = client.embeddings.create(
+        input=question,
+        model="text-embedding-ada-002"
+    )
+    query_embedding = emb.data[0].embedding
+    
+
+    # 2. 백터 DB 조회
+    print('query_embedding 조회')
+    consult_results_q = consult_search(query_embedding)
+    doc_results_q = document_search(query_embedding)
+    ins_results_q = insurance_search(query_embedding)
+
+    print('context_embedding 조회')
+    ins_results_ctx = insurance_search(query_embedding)
+
+    # 결과 합치기 (중복 제거)
+    return consult_results_q + doc_results_q + ins_results_q + ins_results_ctx
+
+
+def embedding_search(question, q_history):
+    result = embedding_search(question)
+    
+    # 히스토리 임베딩
+    if(q_history != None) :
+        recent_history = " ".join([h["content"] for h in q_history[-4:]])
+        context_query = f"{recent_history}\n사용자 질문: {question}"
+
+        emb_ctx = client.embeddings.create(
+            input=context_query,
+            model="text-embedding-ada-002"
+        )
+        context_embedding = emb_ctx.data[0].embedding
+
+    print('context_embedding 조회')
+    consult_results_ctx = consult_search(context_embedding)
+    doc_results_ctx = document_search(context_embedding)
+
+    # 결과 합치기 (중복 제거)
+    return result + consult_results_ctx + doc_results_ctx
+
+    
 
 # 챗봇 서비스
 class ChatbotQueryView(APIView):
@@ -73,35 +119,8 @@ class ChatbotQueryView(APIView):
             v = serializer.validated_data
             question = v.get("question")
             q_history = v.get("q_history", [])
-
-            # 1. 질문 임베딩
-            emb = client.embeddings.create(
-                input=question,
-                model="text-embedding-ada-002"
-            )
-            query_embedding = emb.data[0].embedding
             
-            # 2. 히스토리 임베딩
-            recent_history = " ".join([h["content"] for h in q_history[-4:]])
-            context_query = f"{recent_history}\n사용자 질문: {question}"
-
-            emb_ctx = client.embeddings.create(
-                input=context_query,
-                model="text-embedding-ada-002"
-            )
-            context_embedding = emb_ctx.data[0].embedding
-
-            # 2. 백터 DB 조회
-            print('query_embedding 조회')
-            consult_results_q = consult_search(query_embedding)
-            doc_results_q = document_search(query_embedding)
-
-            print('context_embedding 조회')
-            consult_results_ctx = consult_search(context_embedding)
-            doc_results_ctx = document_search(context_embedding)
-
-            # 결과 합치기 (중복 제거)
-            all_results = consult_results_q + doc_results_q + consult_results_ctx + doc_results_ctx
+            all_results = embedding_search(question, q_history)
 
             sources = []
             context_texts = []
@@ -172,36 +191,9 @@ class ChatbotQueryView2(APIView):
         try:
             v = serializer.validated_data
             question = v.get("question")
-            q_history = v.get("q_history", [])
-
-            # 1. 질문 임베딩
-            emb = client.embeddings.create(
-                input=question,
-                model="text-embedding-ada-002"
-            )
-            query_embedding = emb.data[0].embedding
-            
-            # 2. 히스토리 임베딩
-            recent_history = " ".join([h["content"] for h in q_history[-4:]])
-            context_query = f"{recent_history}\n사용자 질문: {question}"
-
-            emb_ctx = client.embeddings.create(
-                input=context_query,
-                model="text-embedding-ada-002"
-            )
-            context_embedding = emb_ctx.data[0].embedding
-
-            # 2. 백터 DB 조회
-            print('query_embedding 조회')
-            consult_results_q = consult_search(query_embedding)
-            doc_results_q = document_search(query_embedding)
-
-            print('context_embedding 조회')
-            consult_results_ctx = consult_search(context_embedding)
-            doc_results_ctx = document_search(context_embedding)
 
             # 결과 합치기 (중복 제거)
-            all_results = consult_results_q + doc_results_q + consult_results_ctx + doc_results_ctx
+            all_results = embedding_search(question)
 
             sources = []
             context_texts = []
@@ -220,8 +212,6 @@ class ChatbotQueryView2(APIView):
 
             # 3. LLM 호출 (검색 결과 포함)
             messages = []
-            for h in q_history:
-                messages.append({"role": h["role"], "content": h["content"]})
             # system prompt
             messages.append({
                 "role": "system",
@@ -264,7 +254,6 @@ class ChatbotQueryView2(APIView):
             if response.status_code == 200:
                 data = response.json()
                 llm_answer = data["answer"]
-                sources = data.get("citations", [])
             else:
                 raise Exception(f"API 호출 실패: {response.status_code}, {response.text}")
 
@@ -278,3 +267,5 @@ class ChatbotQueryView2(APIView):
 
         except Exception as e:
             return response_err(500, f"서버 오류: {str(e)}")
+        
+        
