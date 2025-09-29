@@ -62,7 +62,7 @@ class InsuranceTermsVectorizer(APIView):
         return response_suc()
     
     
-def embedding_search(question):
+def embedding_search(question, user_id):
     # 1. 질문 임베딩
     emb = client.embeddings.create(
         input=question,
@@ -75,7 +75,7 @@ def embedding_search(question):
     print('query_embedding 조회')
     consult_results_q = consult_search(query_embedding)
     doc_results_q = document_search(query_embedding)
-    ins_results_q = insurance_search(query_embedding)
+    ins_results_q = insurance_search(query_embedding, user_id=user_id)
 
     print('context_embedding 조회')
     ins_results_ctx = insurance_search(query_embedding)
@@ -84,8 +84,8 @@ def embedding_search(question):
     return consult_results_q + doc_results_q + ins_results_q + ins_results_ctx
 
 
-def embedding_search(question, q_history):
-    result = embedding_search(question)
+def embedding_search(question, user_id, q_history):
+    result = embedding_search(question, user_id)
     
     # 히스토리 임베딩
     if(q_history != None) :
@@ -112,15 +112,18 @@ class ChatbotQueryView(APIView):
     def post(self, request):
         print('챗봇 시작')
         serializer = ChatbotRequestSerializer(data=request.data)
+        user_id = request.headers.get("user_id")
         if not serializer.is_valid():
             return response_err(400, "잘못된 요청 형식")
+        if not user_id:
+            return response_err(400, "user_id header가 필요합니다")
 
         try:
             v = serializer.validated_data
             question = v.get("question")
             q_history = v.get("q_history", [])
             
-            all_results = embedding_search(question, q_history)
+            all_results = embedding_search(question, user_id, q_history)
 
             sources = []
             context_texts = []
@@ -185,15 +188,18 @@ class ChatbotQueryView2(APIView):
     def post(self, request):
         print('챗봇 시작')
         serializer = ChatbotRequestSerializer(data=request.data)
+        user_id = request.headers.get("user_id")
         if not serializer.is_valid():
             return response_err(400, "잘못된 요청 형식")
-
+        if not user_id:
+            return response_err(400, "user_id header가 필요합니다")
+        
         try:
             v = serializer.validated_data
             question = v.get("question")
 
             # 결과 합치기 (중복 제거)
-            all_results = embedding_search(question)
+            all_results = embedding_search(question, user_id)
 
             sources = []
             context_texts = []
