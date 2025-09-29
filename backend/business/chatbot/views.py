@@ -77,18 +77,14 @@ def embedding_search(question, user_id):
     doc_results_q = document_search(query_embedding)
     ins_results_q = insurance_search(query_embedding, user_id=user_id)
 
-    print('context_embedding 조회')
-    ins_results_ctx = insurance_search(query_embedding)
-
     # 결과 합치기 (중복 제거)
-    return consult_results_q + doc_results_q + ins_results_q + ins_results_ctx
+    return consult_results_q + doc_results_q + ins_results_q
 
 
-def embedding_search(question, user_id, q_history):
+def embedding_search_with_history(question, q_history, user_id):
     result = embedding_search(question, user_id)
     
-    # 히스토리 임베딩
-    if(q_history != None) :
+    if q_history:  
         recent_history = " ".join([h["content"] for h in q_history[-4:]])
         context_query = f"{recent_history}\n사용자 질문: {question}"
 
@@ -98,12 +94,14 @@ def embedding_search(question, user_id, q_history):
         )
         context_embedding = emb_ctx.data[0].embedding
 
-    print('context_embedding 조회')
-    consult_results_ctx = consult_search(context_embedding)
-    doc_results_ctx = document_search(context_embedding)
+        print('context_embedding 조회')
+        consult_results_ctx = consult_search(context_embedding)
+        doc_results_ctx = document_search(context_embedding)
+        ins_results_ctx = insurance_search(context_embedding, user_id=user_id)
 
-    # 결과 합치기 (중복 제거)
-    return result + consult_results_ctx + doc_results_ctx
+        return result + consult_results_ctx + doc_results_ctx + ins_results_ctx
+    
+    return result
 
     
 
@@ -112,7 +110,7 @@ class ChatbotQueryView(APIView):
     def post(self, request):
         print('챗봇 시작')
         serializer = ChatbotRequestSerializer(data=request.data)
-        user_id = request.headers.get("user_id")
+        user_id = request.headers.get("X-User-Id")
         if not serializer.is_valid():
             return response_err(400, "잘못된 요청 형식")
         if not user_id:
@@ -123,7 +121,7 @@ class ChatbotQueryView(APIView):
             question = v.get("question")
             q_history = v.get("q_history", [])
             
-            all_results = embedding_search(question, user_id, q_history)
+            all_results = embedding_search_with_history(question, user_id, q_history)
 
             sources = []
             context_texts = []
@@ -188,7 +186,7 @@ class ChatbotQueryView2(APIView):
     def post(self, request):
         print('챗봇 시작')
         serializer = ChatbotRequestSerializer(data=request.data)
-        user_id = request.headers.get("user_id")
+        user_id = request.headers.get("X-User-Id")
         if not serializer.is_valid():
             return response_err(400, "잘못된 요청 형식")
         if not user_id:
