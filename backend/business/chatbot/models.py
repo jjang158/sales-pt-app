@@ -5,6 +5,7 @@ class VectorFileInfo(models.Model):
     file_name = models.CharField(max_length=255, unique=True)
     status = models.CharField(max_length=1, choices=[('S','성공'), ('F','실패'), ('P','진행중')], default='P')
     created_at = models.DateTimeField(auto_now_add=True)
+    user_id = models.IntegerField()
 
     def __str__(self):
         return self.file_name

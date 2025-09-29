@@ -34,7 +34,7 @@ def chunk_text(text, chunk_size=1000, overlap=200):
 #     4. 처리 성공/실패에 따른 카운트 집계
 # Returns:
 #     tuple: (총 파일 개수, 성공적으로 벡터화된 파일 개수)
-def guide_pdf_vectorizing(pdf_dir, vector_info, vector_detail):
+def guide_pdf_vectorizing(pdf_dir, vector_info, vector_detail, user_id=None):
     files = [f for f in os.listdir(pdf_dir) if f.endswith(".pdf")]
     suc_count = 0
 
@@ -45,7 +45,7 @@ def guide_pdf_vectorizing(pdf_dir, vector_info, vector_detail):
         if vector_info.objects.filter(file_name=file_name).filter(status='S').exists():
             continue
 
-        suc_count = process_pdfs(pdf_path, file_name, vector_info, vector_detail)
+        suc_count = process_pdfs(pdf_path, file_name, vector_info, vector_detail, user_id)
 
     return len(files), suc_count
 
