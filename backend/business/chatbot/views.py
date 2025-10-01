@@ -121,7 +121,7 @@ class ChatbotQueryView(APIView):
             question = v.get("question")
             q_history = v.get("q_history", [])
             
-            all_results = embedding_search_with_history(question, user_id, q_history)
+            all_results = embedding_search_with_history(question, q_history, user_id)
 
             sources = []
             context_texts = []
